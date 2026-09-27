@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>स्पोर्ट्स स्कोरबोर्ड ऐप</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        select, input[type="text"], input[type="color"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .team-inputs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .scoreboard {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .team-card {
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            background: #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .team-card.active-service {
+            border-color: #16a34a;
+            box-shadow: 0 0 10px rgba(22, 163, 74, 0.3);
+        }
+
+        .team-info h3 {
+            margin: 0 0 5px 0;
+        }
+
+        .score-display {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .controls button {
+            margin-top: 0;
+        }
+
+        .btn-secondary {
+            background-color: #64748b;
+        }
+
+        .btn-danger {
+            background-color: #dc2626;
+        }
+
+        .history-box {
+            margin-top: 20px;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 6px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .service-badge {
+            font-size: 12px;
+            background: #16a34a;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- सेटअप स्क्रीन -->
+    <div id="setup-screen">
+        <h2>मैच सेटअप</h2>
+        <div class="form-group">
+            <label>टीमों की संख्या चुनें:</label>
+            <select id="num-teams" onchange="generateTeamInputs()">
+                <option value="2">2 टीमें</option>
+                <option value="3">3 टीमें</option>
+                <option value="4">4 टीमें</option>
+            </select>
+        </div>
+
+        <div id="teams-config-container">
+            <!-- यहाँ डायनेमिक इनपुट आएंगे -->
+        </div>
+
+        <button onclick="startMatch()">मैच शुरू करें</button>
+    </div>
+
+    <!-- स्कोरबोर्ड स्क्रीन -->
+    <div id="score-screen" class="hidden">
+        <h2 id="round-title">राउंड 1</h2>
+        
+        <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+            <span id="service-indicator" style="font-weight: bold; color: #16a34a;">सर्विस: टीम 1</span>
+            <button onclick="changeService()" style="width: auto; padding: 6px 12px; margin-top: 0; background-color: #ea580c;">सर्विस बदलें</button>
+        </div>
+
+        <div class="scoreboard" id="scoreboard-container">
+            <!-- स्कोर कार्ड यहाँ जनरेट होंगे -->
+        </div>
+
+        <div class="controls">
+            <button onclick="undoScore()" class="btn-secondary">Undo</button>
+            <button onclick="nextRound()" class="btn-secondary">अगला राउंड</button>
+            <button onclick="endMatch()" class="btn-danger">मैच समाप्त</button>
+        </div>
+
+        <div class="history-box" id="history-box">
+            <strong>मैच हिस्ट्री:</strong>
+            <div id="history-content"></div>
+        </div>
+    </div>
+
+    <!-- परिणाम स्क्रीन -->
+    <div id="result-screen" class="hidden">
+        <h2>मैच समाप्त!</h2>
+        <h3 id="winner-text" style="text-align: center; color: #16a34a;"></h3>
+        <div class="history-box" style="max-height: 250px;">
+            <strong>पूर्ण विवरण / हिस्ट्री:</strong>
+            <div id="final-history-content"></div>
+        </div>
+        <button onclick="resetApp()" style="margin-top: 20px;">नया मैच शुरू करें</button>
+    </div>
+</div>
+
+<script>
+    let teams = [];
+    let currentRound = 1;
+    let serviceIndex = 0;
+    let historyLog = [];
+    let lastAction = null; // Undo के लिए
+
+    function generateTeamInputs() {
+        const num = document.getElementById('num-teams').value;
+        const container = document.getElementById('teams-config-container');
+        container.innerHTML = '';
+
+        for (let i = 0; i < num; i++) {
+            container.innerHTML += `
+                <div class="team-inputs">
+                    <input type="text" placeholder="टीम ${i + 1} का नाम" id="team-name-${i}" value="टीम ${i + 1}">
+                    <input type="color" id="team-color-${i}" value="${['#2563eb', '#dc2626', '#16a34a', '#d97706'][i]}">
+                </div>
+            `;
+        }
+    }
+
+    // शुरू में लोड करते ही इनपुट बना दें
+    generateTeamInputs();
+
+    function startMatch() {
+        const num = document.getElementById('num-teams').value;
+        teams = [];
+
+        for (let i = 0; i < num; i++) {
+            const name = document.getElementById(`team-name-${i}`).value || `टीम ${i + 1}`;
+            const color = document.getElementById(`team-color-${i}`).value;
+            teams.push({
+                name: name,
+                color: color,
+                score: 0,
+                roundsWon: 0
+            });
+        }
+
+        currentRound = 1;
+        serviceIndex = 0;
+        historyLog = [`मैच शुरू हुआ (राउंड ${currentRound})`];
+        
+        document.getElementById('setup-screen').classList.add('hidden');
+        document.getElementById('score-screen').classList.remove('hidden');
+        updateScoreboardUI();
+    }
+
+    function updateScoreboardUI() {
+        const container = document.getElementById('scoreboard-container');
+        container.innerHTML = '';
+
+        document.getElementById('round-title').innerText = `राउंड ${currentRound}`;
+        document.getElementById('service-indicator').innerText = `현재 सर्विस: ${teams[serviceIndex].name}`;
+
+        teams.forEach((team, index) => {
+            const isActiveService = (index === serviceIndex);
+            container.innerHTML += `
+                <div class="team-card ${isActiveService ? 'active-service' : ''}" style="border-left: 8px solid ${team.color};">
+                    <div class="team-info">
+                        <h3 style="color: ${team.color};">${team.name}</h3>
+                        ${isActiveService ? '<span class="service-badge">सर्विस यहाँ है</span>' : ''}
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span class="score-display">${team.score}</span>
+                        <button onclick="addPoint(${index})" style="width: auto; padding: 8px 15px; margin-top:0;">+1</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        updateHistoryUI();
+    }
+
+    function addPoint(index) {
+        // आपकी शर्त: "जिस टीम की सेवा हो उसी का स्कोर चेंज हो"
+        if (index !== serviceIndex) {
+            alert(`स्कोर केवल उस टीम का बदल सकता है जिसके पास सर्विस है (${teams[serviceIndex].name})!`);
+            return;
+        }
+
+        lastAction = { type: 'add', teamIndex: index, prevScore: teams[index].score };
+        teams[index].score += 1;
+        historyLog.push(`${teams[index].name} को +1 पॉइंट मिला (राउंड ${currentRound})`);
+        updateScoreboardUI();
+    }
+
+    function changeService() {
+        serviceIndex = (serviceIndex + 1) % teams.length;
+        historyLog.push(`सर्विस बदलकर ${teams[serviceIndex].name} को दी गई`);
+        updateScoreboardUI();
+    }
+
+    function undoScore() {
+        if (!lastAction) {
+            alert('Undo करने के लिए कोई पिछला एक्शन नहीं है!');
+            return;
+        }
+
+        if (lastAction.type === 'add') {
+            teams[lastAction.teamIndex].score = lastAction.prevScore;
+            historyLog.push(`अंतिम एक्शन को Undo किया गया`);
+            lastAction = null;
+            updateScoreboardUI();
+        }
+    }
+
+    function nextRound() {
+        // वर्तमान राउंड का विजेता तय करें
+        let maxScore = -1;
+        let roundWinner = '';
+        teams.forEach(t => {
+            if (t.score > maxScore) {
+                maxScore = t.score;
+                roundWinner = t.name;
+            }
+        });
+
+        historyLog.push(`-- राउंड ${currentRound} समाप्त। विजेता: ${roundWinner} (स्कोर: ${maxScore}) --`);
+        
+        // स्कोर रीसेट करें नए राउंड के लिए
+        teams.forEach(t => t.score = 0);
+        currentRound++;
+        lastAction = null;
+        updateScoreboardUI();
+    }
+
+    function endMatch() {
+        document.getElementById('score-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+
+        // कुल स्कोर या सबसे ज्यादा पॉइंट देखने के लिए 
+        let highestScore = -1;
+        let winnerName = '';
+        teams.forEach(t => {
+            if (t.score > highestScore) {
+                highestScore = t.score;
+                winnerName = t.name;
+            }
+        });
+
+        document.getElementById('winner-text').innerText = `विजेता: ${winnerName} 🎉`;
+        
+        const finalHistoryDiv = document.getElementById('final-history-content');
+        finalHistoryDiv.innerHTML = historyLog.map(item => `<div>• ${item}</div>`).join('');
+    }
+
+    function updateHistoryUI() {
+        const historyContent = document.getElementById('history-content');
+        historyContent.innerHTML = historyLog.slice(-5).map(item => `<div>• ${item}</div>`).join('');
+    }
+
+    function resetApp() {
+        document.getElementById('result-screen').classList.add('hidden');
+        document.getElementById('setup-screen').classList.remove('hidden');
+    }
+</script>
+
+</body>
+</html>
